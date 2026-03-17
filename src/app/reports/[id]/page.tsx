@@ -11,6 +11,7 @@ interface ReportDetail {
   reportDate: string;
   receivingMethod: string;
   invoiceNumber: string;
+  poNumber: string;
   operatorName: string;
   signature: string;
   items: Array<{
@@ -81,6 +82,12 @@ export default function ReportDetailPage() {
             <div className="flex justify-between">
               <p className="text-sm text-muted">Invoice #</p>
               <p className="text-sm font-medium">{report.invoiceNumber}</p>
+            </div>
+          )}
+          {report.poNumber && (
+            <div className="flex justify-between">
+              <p className="text-sm text-muted">PO #</p>
+              <p className="text-sm font-medium">{report.poNumber}</p>
             </div>
           )}
           <div className="flex justify-between">

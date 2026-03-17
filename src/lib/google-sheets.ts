@@ -3,6 +3,7 @@ interface ReportSheetRow {
   companyReceiving: string;
   receivingMethod: string;
   invoiceNumber: string;
+  poNumber: string;
   items: Array<{
     productName: string;
     lotCode: string;
@@ -28,6 +29,7 @@ export async function appendViaWebhook(row: ReportSheetRow) {
         company: row.companyReceiving,
         method: row.receivingMethod,
         invoiceNumber: row.invoiceNumber,
+        poNumber: row.poNumber,
         items: row.items.map((i) => ({
           productName: i.productName,
           lotCode: i.lotCode,

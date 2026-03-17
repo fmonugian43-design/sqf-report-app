@@ -21,7 +21,7 @@ const emptyProduct = (): ProductEntry => ({
 
 type Step = "header" | "products" | "review";
 
-export default function NewOutgoingReportPage() {
+export default function NewIncomingReportPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("header");
   const [saving, setSaving] = useState(false);
@@ -32,7 +32,6 @@ export default function NewOutgoingReportPage() {
   const [reportDate, setReportDate] = useState(todayISO());
   const [receivingMethod, setReceivingMethod] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [poNumber, setPoNumber] = useState("");
 
   // Products
   const [products, setProducts] = useState<ProductEntry[]>([emptyProduct()]);
@@ -101,12 +100,11 @@ export default function NewOutgoingReportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reportType: "outgoing",
+          reportType: "incoming",
           companyReceiving: companyReceiving.trim(),
           reportDate,
           receivingMethod: receivingMethod.trim(),
           invoiceNumber: invoiceNumber.trim(),
-          poNumber: poNumber.trim(),
           operatorName: operatorName.trim(),
           signature: signature.trim(),
           items: filledProducts.map((p) => ({
@@ -172,7 +170,7 @@ export default function NewOutgoingReportPage() {
               </svg>
               Back
             </button>
-            <h1 className="text-xl font-bold">Outgoing Report</h1>
+            <h1 className="text-xl font-bold">Incoming Report</h1>
             <button
               type="button"
               onClick={goToProducts}
@@ -182,16 +180,16 @@ export default function NewOutgoingReportPage() {
             </button>
           </div>
 
-          <p className="text-sm text-muted mb-6">Fill in the report header information</p>
+          <p className="text-sm text-muted mb-6">Fill in the receiving information</p>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted mb-1 block">Company Receiving Product *</label>
+              <label className="text-sm font-medium text-muted mb-1 block">Company Shipping Product *</label>
               <input
                 type="text"
                 value={companyReceiving}
                 onChange={(e) => setCompanyReceiving(e.target.value)}
-                placeholder="Enter company name"
+                placeholder="Enter supplier / shipper name"
                 className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
                 autoFocus
               />
@@ -213,7 +211,7 @@ export default function NewOutgoingReportPage() {
                 type="text"
                 value={receivingMethod}
                 onChange={(e) => setReceivingMethod(e.target.value)}
-                placeholder="e.g. Truck, Pickup, etc."
+                placeholder="e.g. Truck, LTL, Courier"
                 className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
               />
             </div>
@@ -225,17 +223,6 @@ export default function NewOutgoingReportPage() {
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="Enter invoice number"
-                className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted mb-1 block">PO #</label>
-              <input
-                type="text"
-                value={poNumber}
-                onChange={(e) => setPoNumber(e.target.value)}
-                placeholder="Enter PO number"
                 className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
               />
             </div>
@@ -267,7 +254,7 @@ export default function NewOutgoingReportPage() {
             </button>
           </div>
 
-          <p className="text-sm text-muted mb-4">Add products to the report. Use the scan button to scan barcodes.</p>
+          <p className="text-sm text-muted mb-4">Add received products. Use the scan button to scan barcodes.</p>
 
           <div className="space-y-4">
             {products.map((product, idx) => (
@@ -398,12 +385,6 @@ export default function NewOutgoingReportPage() {
                 <div className="flex justify-between">
                   <p className="text-sm text-muted">Invoice #</p>
                   <p className="text-sm font-medium">{invoiceNumber}</p>
-                </div>
-              )}
-              {poNumber && (
-                <div className="flex justify-between">
-                  <p className="text-sm text-muted">PO #</p>
-                  <p className="text-sm font-medium">{poNumber}</p>
                 </div>
               )}
             </div>

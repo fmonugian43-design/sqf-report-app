@@ -23,6 +23,7 @@ sqlite.exec(`
     report_date TEXT NOT NULL,
     receiving_method TEXT DEFAULT '',
     invoice_number TEXT DEFAULT '',
+    po_number TEXT DEFAULT '',
     operator_name TEXT DEFAULT '',
     signature TEXT DEFAULT '',
     created_at INTEGER DEFAULT (unixepoch())

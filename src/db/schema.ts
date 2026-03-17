@@ -8,6 +8,7 @@ export const reports = sqliteTable("reports", {
   reportDate: text("report_date").notNull(),
   receivingMethod: text("receiving_method").default(""),
   invoiceNumber: text("invoice_number").default(""),
+  poNumber: text("po_number").default(""),
   operatorName: text("operator_name").default(""),
   signature: text("signature").default(""),
   createdAt: integer("created_at", { mode: "timestamp" }).default(

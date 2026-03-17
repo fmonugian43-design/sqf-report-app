@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     reportDate,
     receivingMethod = "",
     invoiceNumber = "",
+    poNumber = "",
     operatorName = "",
     signature = "",
     items = [],
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
       reportDate,
       receivingMethod,
       invoiceNumber,
+      poNumber,
       operatorName,
       signature,
     })
@@ -79,6 +81,7 @@ export async function POST(req: Request) {
     companyReceiving,
     receivingMethod,
     invoiceNumber,
+    poNumber,
     items: items.map((i: { productName: string; lotCode: string; quantity: string; condition: string }) => ({
       productName: i.productName,
       lotCode: i.lotCode || "",
