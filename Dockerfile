@@ -28,9 +28,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Rebuild better-sqlite3 for the runtime environment
+# Rebuild better-sqlite3 and install runtime deps
 COPY --from=builder /app/package.json /app/package-lock.json ./
-RUN npm install better-sqlite3 --build-from-source
+RUN npm install better-sqlite3 --build-from-source && \
+    npm install nodemailer pdf-lib
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
