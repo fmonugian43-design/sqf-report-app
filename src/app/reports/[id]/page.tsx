@@ -14,6 +14,10 @@ interface ReportDetail {
   poNumber: string;
   operatorName: string;
   signature: string;
+  machineName: string;
+  lastLotCode: string;
+  cleaningProduct: string;
+  processUsed: string;
   items: Array<{
     productName: string;
     lotCode: string;
@@ -21,6 +25,12 @@ interface ReportDetail {
     condition: string;
   }>;
 }
+
+const reportTypeLabel: Record<string, string> = {
+  outgoing: "SQF Outgoing Report",
+  incoming: "SQF Incoming Report",
+  cip: "Clean In Place Report",
+};
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -42,6 +52,8 @@ export default function ReportDetailPage() {
     );
   }
 
+  const isCIP = report.reportType === "cip";
+
   return (
     <div className="px-4 pt-4 pb-8">
       <div className="flex items-center justify-between mb-4">
@@ -61,57 +73,98 @@ export default function ReportDetailPage() {
 
       <div className="bg-card border border-border rounded-xl mb-4 overflow-hidden">
         <div className="px-4 py-3 border-b border-border bg-gray-50">
-          <p className="font-semibold">SQF Outgoing Report</p>
+          <p className="font-semibold">{reportTypeLabel[report.reportType] || "SQF Report"}</p>
         </div>
         <div className="px-4 py-3 space-y-2">
-          <div className="flex justify-between">
-            <p className="text-sm text-muted">Company</p>
-            <p className="text-sm font-medium">{report.companyReceiving}</p>
-          </div>
-          <div className="flex justify-between">
-            <p className="text-sm text-muted">Date</p>
-            <p className="text-sm font-medium">{formatDate(report.reportDate)}</p>
-          </div>
-          {report.receivingMethod && (
-            <div className="flex justify-between">
-              <p className="text-sm text-muted">Method</p>
-              <p className="text-sm font-medium">{report.receivingMethod}</p>
-            </div>
+          {isCIP ? (
+            <>
+              {report.machineName && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Machine</p>
+                  <p className="text-sm font-medium">{report.machineName}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Date</p>
+                <p className="text-sm font-medium">{formatDate(report.reportDate)}</p>
+              </div>
+              {report.lastLotCode && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Last Lot Code</p>
+                  <p className="text-sm font-medium">{report.lastLotCode}</p>
+                </div>
+              )}
+              {report.cleaningProduct && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Cleaning Product</p>
+                  <p className="text-sm font-medium">{report.cleaningProduct}</p>
+                </div>
+              )}
+              {report.processUsed && (
+                <div>
+                  <p className="text-sm text-muted mb-1">Process Used</p>
+                  <p className="text-sm font-medium whitespace-pre-wrap">{report.processUsed}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Operator</p>
+                <p className="text-sm font-medium">{report.operatorName}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Company</p>
+                <p className="text-sm font-medium">{report.companyReceiving}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Date</p>
+                <p className="text-sm font-medium">{formatDate(report.reportDate)}</p>
+              </div>
+              {report.receivingMethod && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Method</p>
+                  <p className="text-sm font-medium">{report.receivingMethod}</p>
+                </div>
+              )}
+              {report.invoiceNumber && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Invoice #</p>
+                  <p className="text-sm font-medium">{report.invoiceNumber}</p>
+                </div>
+              )}
+              {report.poNumber && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">PO #</p>
+                  <p className="text-sm font-medium">{report.poNumber}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Operator</p>
+                <p className="text-sm font-medium">{report.operatorName}</p>
+              </div>
+            </>
           )}
-          {report.invoiceNumber && (
-            <div className="flex justify-between">
-              <p className="text-sm text-muted">Invoice #</p>
-              <p className="text-sm font-medium">{report.invoiceNumber}</p>
-            </div>
-          )}
-          {report.poNumber && (
-            <div className="flex justify-between">
-              <p className="text-sm text-muted">PO #</p>
-              <p className="text-sm font-medium">{report.poNumber}</p>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <p className="text-sm text-muted">Operator</p>
-            <p className="text-sm font-medium">{report.operatorName}</p>
-          </div>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-gray-50">
-          <p className="font-semibold">Products ({report.items.length})</p>
-        </div>
-        {report.items.map((item, idx) => (
-          <div key={idx} className="px-4 py-3 border-b border-border last:border-b-0">
-            <p className="font-medium">{item.productName}</p>
-            <div className="flex gap-4 mt-1">
-              {item.lotCode && <p className="text-xs text-muted">Lot: {item.lotCode}</p>}
-              {item.quantity && <p className="text-xs text-muted">Qty: {item.quantity}</p>}
-              {item.condition && <p className="text-xs text-muted">Condition: {item.condition}</p>}
-            </div>
+      {!isCIP && report.items && report.items.length > 0 && (
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-gray-50">
+            <p className="font-semibold">Products ({report.items.length})</p>
           </div>
-        ))}
-      </div>
+          {report.items.map((item, idx) => (
+            <div key={idx} className="px-4 py-3 border-b border-border last:border-b-0">
+              <p className="font-medium">{item.productName}</p>
+              <div className="flex gap-4 mt-1">
+                {item.lotCode && <p className="text-xs text-muted">Lot: {item.lotCode}</p>}
+                {item.quantity && <p className="text-xs text-muted">Qty: {item.quantity}</p>}
+                {item.condition && <p className="text-xs text-muted">Condition: {item.condition}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

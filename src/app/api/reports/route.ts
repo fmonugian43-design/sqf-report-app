@@ -23,24 +23,36 @@ export async function POST(req: Request) {
   const body = await req.json();
   const {
     reportType = "outgoing",
-    companyReceiving,
+    companyReceiving = "",
     reportDate,
     receivingMethod = "",
     invoiceNumber = "",
     poNumber = "",
     operatorName = "",
     signature = "",
+    machineName = "",
+    lastLotCode = "",
+    cleaningProduct = "",
+    processUsed = "",
     items = [],
   } = body;
 
-  if (!companyReceiving || !reportDate) {
+  if (!reportDate) {
     return NextResponse.json(
-      { error: "Company and date are required" },
+      { error: "Date is required" },
       { status: 400 }
     );
   }
 
-  if (!items.length) {
+  // CIP reports don't require company or items
+  if (reportType !== "cip" && !companyReceiving) {
+    return NextResponse.json(
+      { error: "Company is required" },
+      { status: 400 }
+    );
+  }
+
+  if (reportType !== "cip" && !items.length) {
     return NextResponse.json(
       { error: "At least one product is required" },
       { status: 400 }
@@ -51,13 +63,17 @@ export async function POST(req: Request) {
     .insert(reports)
     .values({
       reportType,
-      companyReceiving,
+      companyReceiving: companyReceiving || reportType === "cip" ? (machineName || "CIP Report") : companyReceiving,
       reportDate,
       receivingMethod,
       invoiceNumber,
       poNumber,
       operatorName,
       signature,
+      machineName,
+      lastLotCode,
+      cleaningProduct,
+      processUsed,
     })
     .returning()
     .get();

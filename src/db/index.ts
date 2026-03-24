@@ -26,6 +26,10 @@ sqlite.exec(`
     po_number TEXT DEFAULT '',
     operator_name TEXT DEFAULT '',
     signature TEXT DEFAULT '',
+    machine_name TEXT DEFAULT '',
+    last_lot_code TEXT DEFAULT '',
+    cleaning_product TEXT DEFAULT '',
+    process_used TEXT DEFAULT '',
     created_at INTEGER DEFAULT (unixepoch())
   );
 
@@ -39,5 +43,21 @@ sqlite.exec(`
     sort_order INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+// Add CIP columns if they don't exist (safe to run multiple times)
+const cols = sqlite.prepare("PRAGMA table_info(reports)").all() as { name: string }[];
+const colNames = cols.map((c) => c.name);
+if (!colNames.includes("machine_name")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN machine_name TEXT DEFAULT ''");
+}
+if (!colNames.includes("last_lot_code")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN last_lot_code TEXT DEFAULT ''");
+}
+if (!colNames.includes("cleaning_product")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN cleaning_product TEXT DEFAULT ''");
+}
+if (!colNames.includes("process_used")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN process_used TEXT DEFAULT ''");
+}
 
 export const db = drizzle(sqlite, { schema });

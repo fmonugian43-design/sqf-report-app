@@ -11,6 +11,11 @@ export const reports = sqliteTable("reports", {
   poNumber: text("po_number").default(""),
   operatorName: text("operator_name").default(""),
   signature: text("signature").default(""),
+  // CIP-specific fields
+  machineName: text("machine_name").default(""),
+  lastLotCode: text("last_lot_code").default(""),
+  cleaningProduct: text("cleaning_product").default(""),
+  processUsed: text("process_used").default(""),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`
   ),

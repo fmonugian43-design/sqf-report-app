@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { todayISO } from "@/lib/format";
 import BarcodeScanner from "@/components/BarcodeScanner";
 
@@ -21,10 +21,12 @@ const emptyProduct = (): ProductEntry => ({
 
 type Step = "header" | "products" | "review";
 
-export default function NewOutgoingReportPage() {
+function NewOutgoingReportForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>("header");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
 
   // Header fields
@@ -41,6 +43,43 @@ export default function NewOutgoingReportPage() {
   // Footer
   const [operatorName, setOperatorName] = useState("");
   const [signature, setSignature] = useState("");
+
+  // Pre-fill from last report
+  useEffect(() => {
+    const from = searchParams.get("from");
+    if (from !== "latest") return;
+
+    setLoading(true);
+    fetch("/api/reports/latest")
+      .then((r) => {
+        if (!r.ok) throw new Error("No reports");
+        return r.json();
+      })
+      .then((data) => {
+        setCompanyReceiving(data.companyReceiving || "");
+        setReceivingMethod(data.receivingMethod || "");
+        setInvoiceNumber(data.invoiceNumber || "");
+        setPoNumber(data.poNumber || "");
+        setOperatorName(data.operatorName || "");
+        setSignature(data.signature || "");
+        // Date stays as today
+        if (data.items && data.items.length > 0) {
+          setProducts(
+            data.items.map((item: { productName: string; lotCode: string; quantity: string; condition: string }) => ({
+              productName: item.productName || "",
+              lotCode: item.lotCode || "",
+              quantity: item.quantity || "",
+              condition: item.condition || "",
+            }))
+          );
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        showToast("No previous reports found");
+        setLoading(false);
+      });
+  }, [searchParams]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -126,6 +165,19 @@ export default function NewOutgoingReportPage() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-4 pb-8">
+        <div className="flex gap-2 mb-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-1.5 flex-1 rounded-full bg-gray-200" />
+          ))}
+        </div>
+        <p className="text-center text-muted py-12">Loading last report...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pt-4 pb-8">
@@ -466,5 +518,19 @@ export default function NewOutgoingReportPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewOutgoingReportPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="px-4 pt-4 pb-8">
+          <p className="text-center text-muted py-12">Loading...</p>
+        </div>
+      }
+    >
+      <NewOutgoingReportForm />
+    </Suspense>
   );
 }
