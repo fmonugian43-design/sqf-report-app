@@ -8,6 +8,7 @@ interface Machine {
   id: string;
   name: string;
   steps: string[];
+  eitherOrGroups?: number[][]; // groups of step indices where only one needs to be checked
 }
 
 const MACHINES: Machine[] = [
@@ -24,6 +25,7 @@ const MACHINES: Machine[] = [
       "Sprayed with Sani 10",
       "Removed all valves, cleaned, disinfected, and replaced",
     ],
+    eitherOrGroups: [[2, 3]], // steps at index 2 and 3 are either/or
   },
   {
     id: "kettle-300",
@@ -136,18 +138,44 @@ export default function NewCIPReportPage() {
     setStep("checklist");
   };
 
+  const getEitherOrGroup = (index: number): number[] | null => {
+    if (!selectedMachine?.eitherOrGroups) return null;
+    return selectedMachine.eitherOrGroups.find((g) => g.includes(index)) || null;
+  };
+
   const toggleStep = (index: number) => {
+    const group = getEitherOrGroup(index);
     setChecked((prev) => {
       const updated = [...prev];
+      if (group) {
+        // Radio behavior: uncheck others in the group, toggle this one
+        group.forEach((i) => {
+          if (i !== index) updated[i] = false;
+        });
+      }
       updated[index] = !updated[index];
       return updated;
     });
   };
 
-  const allChecked = checked.length > 0 && checked.every(Boolean);
+  const allRequiredChecked = () => {
+    if (checked.length === 0) return false;
+    const eitherOrIndices = new Set(
+      (selectedMachine?.eitherOrGroups || []).flat()
+    );
+    // All non-either/or steps must be checked
+    for (let i = 0; i < checked.length; i++) {
+      if (!eitherOrIndices.has(i) && !checked[i]) return false;
+    }
+    // At least one in each either/or group must be checked
+    for (const group of selectedMachine?.eitherOrGroups || []) {
+      if (!group.some((i) => checked[i])) return false;
+    }
+    return true;
+  };
 
   const goToConfirm = () => {
-    if (!allChecked) {
+    if (!allRequiredChecked()) {
       showToast("Complete all steps before continuing");
       return;
     }
@@ -164,6 +192,7 @@ export default function NewCIPReportPage() {
 
     try {
       const processDescription = selectedMachine.steps
+        .filter((_, i) => checked[i])
         .map((s, i) => `${i + 1}. ${s} ✓`)
         .join("\n");
 
@@ -270,7 +299,7 @@ export default function NewCIPReportPage() {
             <button
               type="button"
               onClick={goToConfirm}
-              className={`font-semibold ${allChecked ? "text-primary" : "text-muted"}`}
+              className={`font-semibold ${allRequiredChecked() ? "text-primary" : "text-muted"}`}
             >
               Next
             </button>
@@ -340,34 +369,54 @@ export default function NewCIPReportPage() {
           <p className="text-sm font-semibold mb-3">Cleaning Procedures:</p>
 
           <div className="space-y-2">
-            {selectedMachine.steps.map((stepText, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => toggleStep(idx)}
-                className={`w-full text-left flex items-start gap-3 rounded-xl px-4 py-4 border transition-colors ${
-                  checked[idx]
-                    ? "bg-green-50 border-green-300"
-                    : "bg-card border-border"
-                }`}
-              >
-                <div className={`mt-0.5 w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                  checked[idx]
-                    ? "bg-green-500 border-green-500"
-                    : "border-gray-300 bg-white"
-                }`}>
-                  {checked[idx] && (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+            {selectedMachine.steps.map((stepText, idx) => {
+              const group = getEitherOrGroup(idx);
+              const isEitherOr = !!group;
+              const isFirstInGroup = isEitherOr && group![0] === idx;
+              const isSecondInGroup = isEitherOr && group![0] !== idx;
+
+              return (
+                <div key={idx}>
+                  {isSecondInGroup && (
+                    <div className="flex items-center gap-2 my-1 px-4">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs font-bold text-amber-600 uppercase">or</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
                   )}
+                  {isFirstInGroup && (
+                    <p className="text-xs font-medium text-amber-600 px-4 mb-1">Select one:</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => toggleStep(idx)}
+                    className={`w-full text-left flex items-start gap-3 rounded-xl px-4 py-4 border transition-colors ${
+                      checked[idx]
+                        ? "bg-green-50 border-green-300"
+                        : isEitherOr
+                        ? "bg-amber-50/30 border-amber-200"
+                        : "bg-card border-border"
+                    }`}
+                  >
+                    <div className={`mt-0.5 w-6 h-6 ${isEitherOr ? "rounded-full" : "rounded-md"} border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      checked[idx]
+                        ? "bg-green-500 border-green-500"
+                        : "border-gray-300 bg-white"
+                    }`}>
+                      {checked[idx] && (
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted mb-0.5">Step {idx + 1}</p>
+                      <p className={`font-medium ${checked[idx] ? "text-green-800" : ""}`}>{stepText}</p>
+                    </div>
+                  </button>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted mb-0.5">Step {idx + 1}</p>
-                  <p className={`font-medium ${checked[idx] ? "text-green-800" : ""}`}>{stepText}</p>
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-4 text-center">
