@@ -32,9 +32,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm install better-sqlite3 --build-from-source
 
-# Copy pdfkit font data files (needed for PDF generation)
-COPY --from=builder /app/node_modules/pdfkit/js/data ./node_modules/pdfkit/js/data
-
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 

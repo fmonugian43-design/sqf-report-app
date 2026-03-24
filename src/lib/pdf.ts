@@ -1,4 +1,4 @@
-import PDFDocument from "pdfkit";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 interface CIPReportData {
   machineName: string;
@@ -10,52 +10,79 @@ interface CIPReportData {
   signature: string;
 }
 
-export function generateCIPPdf(data: CIPReportData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "LETTER", margin: 50, compress: true });
-    const chunks: Buffer[] = [];
+export async function generateCIPPdf(data: CIPReportData): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([612, 792]); // Letter size
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const regular = await doc.embedFont(StandardFonts.Helvetica);
 
-    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  let y = 740;
+  const left = 50;
 
-    // Title
-    doc.fontSize(20).font("Helvetica-Bold").text("SAFE FOOD QUALITY REPORT", { align: "center" });
-    doc.fontSize(14).text("CLEAN IN PLACE PROCESS", { align: "center" });
-    doc.moveDown(1);
-
-    // Info section
-    doc.fontSize(11).font("Helvetica-Bold");
-    const labelWidth = 220;
-
-    const addField = (label: string, value: string) => {
-      doc.font("Helvetica-Bold").text(label, { continued: true, width: labelWidth });
-      doc.font("Helvetica").text(value || "N/A");
-    };
-
-    addField("MACHINE NAME: ", data.machineName);
-    addField("OPERATOR: ", data.operatorName);
-    addField("DATE: ", data.reportDate);
-    addField("LAST LOT CODE USED ON EQUIPMENT: ", data.lastLotCode);
-    addField("PRODUCT USED TO CLEAN: ", data.cleaningProduct);
-    doc.moveDown(1);
-
-    // Checklist
-    doc.font("Helvetica-Bold").fontSize(12).text("CLEANING PROCEDURES COMPLETED:");
-    doc.moveDown(0.5);
-
-    doc.fontSize(11).font("Helvetica");
-    data.steps.forEach((step, i) => {
-      doc.text(`  ☑  ${i + 1}. ${step}`);
-      doc.moveDown(0.3);
-    });
-
-    doc.moveDown(1.5);
-
-    // Signature
-    doc.font("Helvetica-Bold").text("OPERATOR SIGNATURE: ", { continued: true });
-    doc.font("Helvetica").text(data.signature || data.operatorName);
-
-    doc.end();
+  // Title
+  page.drawText("SAFE FOOD QUALITY REPORT", {
+    x: 150,
+    y,
+    size: 18,
+    font: bold,
+    color: rgb(0, 0, 0),
   });
+  y -= 25;
+  page.drawText("CLEAN IN PLACE PROCESS", {
+    x: 190,
+    y,
+    size: 13,
+    font: bold,
+    color: rgb(0, 0, 0),
+  });
+  y -= 40;
+
+  // Fields
+  const addField = (label: string, value: string) => {
+    page.drawText(label, { x: left, y, size: 11, font: bold });
+    page.drawText(value || "N/A", { x: left + 250, y, size: 11, font: regular });
+    y -= 22;
+  };
+
+  addField("MACHINE NAME:", data.machineName);
+  addField("OPERATOR:", data.operatorName);
+  addField("DATE:", data.reportDate);
+  addField("LAST LOT CODE:", data.lastLotCode);
+  addField("PRODUCT USED TO CLEAN:", data.cleaningProduct);
+
+  y -= 15;
+
+  // Checklist header
+  page.drawText("CLEANING PROCEDURES COMPLETED:", {
+    x: left,
+    y,
+    size: 12,
+    font: bold,
+  });
+  y -= 25;
+
+  // Steps
+  data.steps.forEach((step, i) => {
+    page.drawText(`[X]  ${i + 1}. ${step}`, {
+      x: left + 10,
+      y,
+      size: 11,
+      font: regular,
+    });
+    y -= 20;
+  });
+
+  y -= 25;
+
+  // Signature
+  page.drawText("OPERATOR SIGNATURE:", { x: left, y, size: 11, font: bold });
+  page.drawText(data.signature || data.operatorName, {
+    x: left + 160,
+    y,
+    size: 11,
+    font: regular,
+  });
+
+  const pdfBytes = await doc.save();
+  return Buffer.from(pdfBytes);
 }
