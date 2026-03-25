@@ -288,9 +288,9 @@ function NewOutgoingReportForm() {
 
       {/* Product Picker Modal */}
       {productPickerIndex !== null && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white w-full max-w-lg rounded-t-2xl max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl max-h-[75vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h2 className="text-lg font-bold">Select Product</h2>
               <button
                 type="button"
@@ -300,11 +300,11 @@ function NewOutgoingReportForm() {
                 Cancel
               </button>
             </div>
-            <div className="overflow-y-auto p-3">
+            <div className="overflow-y-auto p-3 pb-6">
               {PRODUCT_CATEGORIES.map((category) => (
                 <div key={category.label} className="mb-3">
                   <p className="text-xs font-bold text-muted uppercase tracking-wide px-2 mb-1">{category.label}</p>
-                  <div className="space-y-0.5">
+                  <div className="grid grid-cols-2 gap-1">
                     {category.products.map((productName) => (
                       <button
                         key={productName}
@@ -313,7 +313,7 @@ function NewOutgoingReportForm() {
                           updateProduct(productPickerIndex, "productName", productName);
                           setProductPickerIndex(null);
                         }}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
+                        className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                           products[productPickerIndex]?.productName === productName
                             ? "bg-primary text-white"
                             : "active:bg-gray-100"
