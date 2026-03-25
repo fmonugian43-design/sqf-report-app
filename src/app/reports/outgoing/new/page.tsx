@@ -20,17 +20,18 @@ const emptyProduct = (): ProductEntry => ({
 });
 
 const COMPANIES = [
-  "Company 1 (placeholder)",
-  "Company 2 (placeholder)",
-  "Company 3 (placeholder)",
-  "Company 4 (placeholder)",
-  "Company 5 (placeholder)",
-  "Company 6 (placeholder)",
-  "Company 7 (placeholder)",
-  "Company 8 (placeholder)",
-  "Company 9 (placeholder)",
-  "Company 10 (placeholder)",
-  "Company 11 (placeholder)",
+  "AB Central",
+  "AB IE",
+  "AB Sylmar",
+  "AB BC",
+  "AB SD",
+  "Advance Beverage",
+  "Heimark",
+  "Straub",
+  "Bevmo",
+  "Steves Grocery",
+  "Prodmex",
+  "Summit C&C",
 ];
 
 const METHODS = ["Pickup", "Delivered", "Trucking"];
