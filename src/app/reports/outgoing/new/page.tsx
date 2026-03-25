@@ -3,7 +3,6 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { todayISO } from "@/lib/format";
-import BarcodeScanner from "@/components/BarcodeScanner";
 
 interface ProductEntry {
   productName: string;
@@ -14,7 +13,7 @@ interface ProductEntry {
 
 const emptyProduct = (): ProductEntry => ({
   productName: "",
-  lotCode: "",
+  lotCode: "26",
   quantity: "",
   condition: "",
 });
@@ -36,6 +35,56 @@ const COMPANIES = [
 
 const METHODS = ["Pickup", "Delivered", "Trucking"];
 
+const PRODUCT_CATEGORIES = [
+  {
+    label: "Cups",
+    products: [
+      "Regular Cup",
+      "Caliente Cup",
+      "Kroger Cup",
+      "Liquid Cup",
+      "Liquid Mango Cup",
+    ],
+  },
+  {
+    label: "25oz Bottles",
+    products: [
+      "25oz Prep Bottle",
+      "25oz Mango Prep Bottle",
+      "25oz Simple Syrup",
+      "25oz Lemon Lime Marg",
+      "25oz Jalapeno Marg",
+    ],
+  },
+  {
+    label: "Dips",
+    products: [
+      "Mango Dip",
+      "Watermelon Dip",
+      "Tamarindo Dip",
+    ],
+  },
+  {
+    label: "Rounders",
+    products: [
+      "Chile Limon Rounder",
+      "Cocao Rounder",
+      "Sour Apple Rounder",
+      "Lemon Rounder",
+      "Mixed Berries Rounder",
+      "Watermelon Rounder",
+      "Cinnamon Vanilla Rounder",
+      "Cranberry Rounder",
+    ],
+  },
+  {
+    label: "Shakers",
+    products: [
+      "1.5oz Shaker Bottle",
+    ],
+  },
+];
+
 type Step = "header" | "products" | "review";
 
 function NewOutgoingReportForm() {
@@ -55,8 +104,8 @@ function NewOutgoingReportForm() {
   const [poNumber, setPoNumber] = useState("");
 
   // Products
-  const [products, setProducts] = useState<ProductEntry[]>([emptyProduct()]);
-  const [scanningIndex, setScanningIndex] = useState<number | null>(null);
+  const [products, setProducts] = useState<ProductEntry[]>([{ productName: "", lotCode: "26", quantity: "", condition: "" }]);
+  const [productPickerIndex, setProductPickerIndex] = useState<number | null>(null);
 
   // Footer
   const [operatorName, setOperatorName] = useState("");
@@ -121,12 +170,6 @@ function NewOutgoingReportForm() {
     setProducts((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleBarcodeScan = (value: string) => {
-    if (scanningIndex !== null) {
-      updateProduct(scanningIndex, "productName", value);
-      setScanningIndex(null);
-    }
-  };
 
   const goToProducts = () => {
     if (!companyReceiving) {
@@ -243,12 +286,48 @@ function NewOutgoingReportForm() {
         </div>
       )}
 
-      {/* Barcode Scanner Modal */}
-      {scanningIndex !== null && (
-        <BarcodeScanner
-          onScan={handleBarcodeScan}
-          onClose={() => setScanningIndex(null)}
-        />
+      {/* Product Picker Modal */}
+      {productPickerIndex !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-lg rounded-t-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-lg font-bold">Select Product</h2>
+              <button
+                type="button"
+                onClick={() => setProductPickerIndex(null)}
+                className="text-muted text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="overflow-y-auto p-3">
+              {PRODUCT_CATEGORIES.map((category) => (
+                <div key={category.label} className="mb-3">
+                  <p className="text-xs font-bold text-muted uppercase tracking-wide px-2 mb-1">{category.label}</p>
+                  <div className="space-y-0.5">
+                    {category.products.map((productName) => (
+                      <button
+                        key={productName}
+                        type="button"
+                        onClick={() => {
+                          updateProduct(productPickerIndex, "productName", productName);
+                          setProductPickerIndex(null);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
+                          products[productPickerIndex]?.productName === productName
+                            ? "bg-primary text-white"
+                            : "active:bg-gray-100"
+                        }`}
+                      >
+                        <p className="font-medium">{productName}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Progress bar */}
@@ -394,7 +473,7 @@ function NewOutgoingReportForm() {
             </button>
           </div>
 
-          <p className="text-sm text-muted mb-4">Add products to the report. Use the scan button to scan barcodes.</p>
+          <p className="text-sm text-muted mb-4">Add products to the report.</p>
 
           <div className="space-y-4">
             {products.map((product, idx) => (
@@ -414,38 +493,37 @@ function NewOutgoingReportForm() {
 
                 <div>
                   <label className="text-xs font-medium text-muted mb-1 block">Product Name</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={product.productName}
-                      onChange={(e) => updateProduct(idx, "productName", e.target.value)}
-                      placeholder="Product name"
-                      className="flex-1 border border-border rounded-xl px-3 py-2.5 text-base bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setScanningIndex(idx)}
-                      className="px-3 py-2.5 bg-gray-100 border border-border rounded-xl active:bg-gray-200 shrink-0"
-                      title="Scan barcode"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
-                      </svg>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProductPickerIndex(idx)}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl border transition-colors flex items-center justify-between ${
+                      product.productName
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white border-border"
+                    }`}
+                  >
+                    <span className={product.productName ? "font-medium" : "text-gray-400"}>
+                      {product.productName || "Select Product"}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium text-muted mb-1 block">Lot Code #</label>
-                    <input
-                      type="text"
-                      value={product.lotCode}
-                      onChange={(e) => updateProduct(idx, "lotCode", e.target.value)}
-                      placeholder="Lot code"
-                      className="w-full border border-border rounded-xl px-3 py-2.5 text-base bg-white"
-                    />
+                    <div className="flex border border-border rounded-xl overflow-hidden bg-white">
+                      <span className="px-2 py-2.5 bg-gray-100 text-base font-medium text-gray-600 border-r border-border">26</span>
+                      <input
+                        type="text"
+                        value={product.lotCode.startsWith("26") ? product.lotCode.slice(2) : product.lotCode}
+                        onChange={(e) => updateProduct(idx, "lotCode", "26" + e.target.value)}
+                        placeholder="..."
+                        className="flex-1 px-2 py-2.5 text-base bg-white outline-none"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted mb-1 block">Quantity</label>
