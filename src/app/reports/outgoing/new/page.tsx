@@ -19,6 +19,14 @@ const emptyProduct = (): ProductEntry => ({
   condition: "",
 });
 
+const COMPANIES = [
+  "Company 1 (placeholder)",
+  "Company 2 (placeholder)",
+  "Company 3 (placeholder)",
+];
+
+const METHODS = ["Pickup", "Delivered", "Trucking"];
+
 type Step = "header" | "products" | "review";
 
 function NewOutgoingReportForm() {
@@ -111,8 +119,8 @@ function NewOutgoingReportForm() {
   };
 
   const goToProducts = () => {
-    if (!companyReceiving.trim()) {
-      showToast("Enter company name");
+    if (!companyReceiving) {
+      showToast("Select a company");
       return;
     }
     setStep("products");
@@ -239,14 +247,22 @@ function NewOutgoingReportForm() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-muted mb-1 block">Company Receiving Product *</label>
-              <input
-                type="text"
-                value={companyReceiving}
-                onChange={(e) => setCompanyReceiving(e.target.value)}
-                placeholder="Enter company name"
-                className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                autoFocus
-              />
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {COMPANIES.map((company) => (
+                  <button
+                    key={company}
+                    type="button"
+                    onClick={() => setCompanyReceiving(company)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
+                      companyReceiving === company
+                        ? "bg-primary text-white border-primary"
+                        : "bg-card border-border active:bg-gray-50"
+                    }`}
+                  >
+                    <p className="font-medium">{company}</p>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -260,14 +276,23 @@ function NewOutgoingReportForm() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-muted mb-1 block">Method of Receiving Product</label>
-              <input
-                type="text"
-                value={receivingMethod}
-                onChange={(e) => setReceivingMethod(e.target.value)}
-                placeholder="e.g. Truck, Pickup, etc."
-                className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-              />
+              <label className="text-sm font-medium text-muted mb-1 block">Method</label>
+              <div className="grid grid-cols-3 gap-2">
+                {METHODS.map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => setReceivingMethod(method)}
+                    className={`px-3 py-3 rounded-xl border text-center font-medium transition-colors ${
+                      receivingMethod === method
+                        ? "bg-primary text-white border-primary"
+                        : "bg-card border-border active:bg-gray-50"
+                    }`}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
