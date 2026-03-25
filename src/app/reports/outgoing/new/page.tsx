@@ -23,6 +23,14 @@ const COMPANIES = [
   "Company 1 (placeholder)",
   "Company 2 (placeholder)",
   "Company 3 (placeholder)",
+  "Company 4 (placeholder)",
+  "Company 5 (placeholder)",
+  "Company 6 (placeholder)",
+  "Company 7 (placeholder)",
+  "Company 8 (placeholder)",
+  "Company 9 (placeholder)",
+  "Company 10 (placeholder)",
+  "Company 11 (placeholder)",
 ];
 
 const METHODS = ["Pickup", "Delivered", "Trucking"];
@@ -38,10 +46,11 @@ function NewOutgoingReportForm() {
   const [toast, setToast] = useState("");
 
   // Header fields
+  const [showCompanyPicker, setShowCompanyPicker] = useState(false);
   const [companyReceiving, setCompanyReceiving] = useState("");
   const [reportDate, setReportDate] = useState(todayISO());
   const [receivingMethod, setReceivingMethod] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("26");
   const [poNumber, setPoNumber] = useState("");
 
   // Products
@@ -196,6 +205,43 @@ function NewOutgoingReportForm() {
         </div>
       )}
 
+      {/* Company Picker Modal */}
+      {showCompanyPicker && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-lg rounded-t-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-lg font-bold">Select Company</h2>
+              <button
+                type="button"
+                onClick={() => setShowCompanyPicker(false)}
+                className="text-muted text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="overflow-y-auto p-3 space-y-1">
+              {COMPANIES.map((company) => (
+                <button
+                  key={company}
+                  type="button"
+                  onClick={() => {
+                    setCompanyReceiving(company);
+                    setShowCompanyPicker(false);
+                  }}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl transition-colors ${
+                    companyReceiving === company
+                      ? "bg-primary text-white"
+                      : "active:bg-gray-100"
+                  }`}
+                >
+                  <p className="font-medium">{company}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Barcode Scanner Modal */}
       {scanningIndex !== null && (
         <BarcodeScanner
@@ -247,22 +293,22 @@ function NewOutgoingReportForm() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-muted mb-1 block">Company Receiving Product *</label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {COMPANIES.map((company) => (
-                  <button
-                    key={company}
-                    type="button"
-                    onClick={() => setCompanyReceiving(company)}
-                    className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
-                      companyReceiving === company
-                        ? "bg-primary text-white border-primary"
-                        : "bg-card border-border active:bg-gray-50"
-                    }`}
-                  >
-                    <p className="font-medium">{company}</p>
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowCompanyPicker(true)}
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-colors flex items-center justify-between ${
+                  companyReceiving
+                    ? "bg-primary text-white border-primary"
+                    : "bg-card border-border"
+                }`}
+              >
+                <span className={companyReceiving ? "font-medium" : "text-gray-400"}>
+                  {companyReceiving || "Select Company"}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
             </div>
 
             <div>
@@ -297,13 +343,16 @@ function NewOutgoingReportForm() {
 
             <div>
               <label className="text-sm font-medium text-muted mb-1 block">Invoice #</label>
-              <input
-                type="text"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="Enter invoice number"
-                className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-              />
+              <div className="flex border border-border rounded-xl overflow-hidden bg-card">
+                <span className="px-3 py-3 bg-gray-100 text-base font-medium text-gray-600 border-r border-border">26</span>
+                <input
+                  type="text"
+                  value={invoiceNumber.startsWith("26") ? invoiceNumber.slice(2) : invoiceNumber}
+                  onChange={(e) => setInvoiceNumber("26" + e.target.value)}
+                  placeholder="Enter remaining digits"
+                  className="flex-1 px-3 py-3 text-base bg-card outline-none"
+                />
+              </div>
             </div>
 
             <div>
