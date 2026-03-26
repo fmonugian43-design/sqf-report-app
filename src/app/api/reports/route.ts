@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     .insert(reports)
     .values({
       reportType,
-      companyReceiving: companyReceiving || reportType === "cip" ? (machineName || "CIP Report") : companyReceiving,
+      companyReceiving: reportType === "cip" ? (machineName || "CIP Report") : companyReceiving,
       reportDate,
       receivingMethod,
       invoiceNumber,
