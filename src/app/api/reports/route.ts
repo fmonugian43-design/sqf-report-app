@@ -93,6 +93,27 @@ export async function POST(req: Request) {
       .run();
   }
 
+  // Auto-deduct from Inventory app for outgoing reports (non-blocking)
+  if (reportType === "outgoing" && items.length) {
+    const INVENTORY_API = process.env.INVENTORY_API_URL || "https://inventory-app-production-e6b0.up.railway.app";
+    fetch(`${INVENTORY_API}/api/external/deduct`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        app: "sqf-report",
+        invoiceId: invoiceNumber || String(report.id),
+        items: items.map((i: { productName: string; quantity: string }) => ({
+          productName: i.productName,
+          quantity: parseFloat(i.quantity) || 0,
+        })),
+      }),
+    }).then(r => r.json()).then(r => {
+      console.log("[Inventory Deduct]", JSON.stringify(r));
+    }).catch(err => {
+      console.error("[Inventory Deduct Error]", err.message);
+    });
+  }
+
   // Sync to Google Sheets (non-blocking) - only for incoming/outgoing
   if (reportType !== "cip") {
     appendViaWebhook({
