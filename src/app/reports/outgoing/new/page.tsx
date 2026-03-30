@@ -78,6 +78,13 @@ const PRODUCT_CATEGORIES = [
     ],
   },
   {
+    label: "Bags",
+    products: [
+      "3 Gallon Bag in a Box",
+      "3-3 Liter Bags",
+    ],
+  },
+  {
     label: "Shakers",
     products: [
       "1.5oz Shaker Bottle",
