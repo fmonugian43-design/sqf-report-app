@@ -75,6 +75,7 @@ const PRODUCT_CATEGORIES = [
       "Watermelon Rounder",
       "Cinnamon Vanilla Rounder",
       "Cranberry Rounder",
+      "Pink Himalayan Salt Rounder",
     ],
   },
   {
