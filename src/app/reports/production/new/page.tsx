@@ -98,7 +98,7 @@ export default function NewProductionPage() {
       return;
     }
     if (!operatorName.trim()) {
-      showToast("Enter operator name");
+      showToast("Who made the batch?");
       return;
     }
     setSaving(true);
@@ -273,12 +273,12 @@ export default function NewProductionPage() {
 
           {/* Operator */}
           <div>
-            <label className="text-sm font-medium text-muted mb-1 block">Operator *</label>
+            <label className="text-sm font-medium text-muted mb-1 block">Who made the batch? *</label>
             <input
               type="text"
               value={operatorName}
               onChange={(e) => setOperatorName(e.target.value)}
-              placeholder="Enter operator name"
+              placeholder="Who made the batch?"
               className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
             />
           </div>
