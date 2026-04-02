@@ -18,27 +18,21 @@ interface Shortage {
   unit: string;
 }
 
-type Step = "form" | "review";
-
 export default function NewProductionPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("form");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
 
-  // Recipes from inventory
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
   const [recipesError, setRecipesError] = useState("");
   const [showRecipePicker, setShowRecipePicker] = useState(false);
 
-  // Form fields
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [lbs, setLbs] = useState("");
   const [reportDate, setReportDate] = useState(todayISO());
   const [operatorName, setOperatorName] = useState("");
 
-  // Shortage handling
   const [shortages, setShortages] = useState<Shortage[]>([]);
   const [showShortageWarning, setShowShortageWarning] = useState(false);
 
@@ -47,7 +41,6 @@ export default function NewProductionPage() {
     setTimeout(() => setToast(""), 2500);
   };
 
-  // Fetch recipes on mount
   useEffect(() => {
     setRecipesLoading(true);
     fetch("/api/production/recipes")
@@ -65,10 +58,8 @@ export default function NewProductionPage() {
       });
   }, []);
 
-  // Only mix recipes, grouped by category
   const mixRecipes = recipes.filter((r) => r.recipeType === "mix");
 
-  // Categories checked in order — first match wins
   const MIX_CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
     { label: "Cups", match: (name) => /cup|chili rim mix|chili cup/i.test(name) },
     { label: "Dips", match: (name) => /dip/i.test(name) },
@@ -83,7 +74,7 @@ export default function NewProductionPage() {
   const otherRecipes: Recipe[] = [];
 
   for (const recipe of mixRecipes) {
-    if (recipe.name.toLowerCase() === "test") continue; // skip test recipes
+    if (recipe.name.toLowerCase() === "test") continue;
     const catIdx = MIX_CATEGORIES.findIndex((cat) => cat.match(recipe.name));
     if (catIdx >= 0) {
       categorizedRecipes[catIdx].recipes.push(recipe);
@@ -97,26 +88,19 @@ export default function NewProductionPage() {
     filteredCategories.push({ label: "Other", recipes: otherRecipes });
   }
 
-  const hasQuantity = !!lbs.trim();
-
-  const goToReview = () => {
+  const handleSubmit = async (forceBypass = false) => {
     if (!selectedRecipe) {
       showToast("Select a recipe");
       return;
     }
-    if (!hasQuantity) {
+    if (!lbs.trim()) {
       showToast("Enter pounds");
       return;
     }
-    setStep("review");
-  };
-
-  const handleSubmit = async (forceBypass = false) => {
     if (!operatorName.trim()) {
       showToast("Enter operator name");
       return;
     }
-    if (!selectedRecipe) return;
     setSaving(true);
     setShowShortageWarning(false);
 
@@ -155,11 +139,8 @@ export default function NewProductionPage() {
     }
   };
 
-  const quantityDisplay = `${lbs} lbs`;
-
   return (
     <div className="px-4 pt-4 pb-8">
-      {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-foreground text-white px-6 py-3 rounded-xl z-50 text-sm font-medium shadow-lg">
           {toast}
@@ -213,218 +194,100 @@ export default function NewProductionPage() {
         </div>
       )}
 
-      {/* Progress bar */}
-      <div className="flex gap-2 mb-6">
-        {["form", "review"].map((s) => (
-          <div
-            key={s}
-            className={`h-1.5 flex-1 rounded-full ${
-              s === step || (s === "form" && step === "review")
-                ? "bg-emerald-600"
-                : "bg-gray-200"
-            }`}
-          />
-        ))}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-emerald-600 font-medium flex items-center gap-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Back
+        </button>
+        <h1 className="text-xl font-bold">Production</h1>
+        <div className="w-12" />
       </div>
 
-      {/* STEP 1: Form */}
-      {step === "form" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-emerald-600 font-medium flex items-center gap-1"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 19.5L8.25 12l7.5-7.5"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-xl font-bold">Production</h1>
-            <button
-              type="button"
-              onClick={goToReview}
-              className={`font-semibold ${
-                selectedRecipe && hasQuantity
-                  ? "text-emerald-600"
-                  : "text-muted"
-              }`}
-            >
-              Next
-            </button>
-          </div>
-
-          <p className="text-sm text-muted mb-6">
-            Log a production batch
-          </p>
-
-          {recipesLoading && (
-            <div className="text-center py-8">
-              <p className="text-muted">Loading recipes...</p>
-            </div>
-          )}
-
-          {recipesError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-              <p className="text-red-700 text-sm font-medium">{recipesError}</p>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="text-red-600 text-sm font-semibold mt-2"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {!recipesLoading && !recipesError && (
-            <div className="space-y-4">
-              {/* Recipe picker */}
-              <div>
-                <label className="text-sm font-medium text-muted mb-1 block">
-                  Recipe *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowRecipePicker(true)}
-                  className={`w-full text-left border rounded-xl px-4 py-3 text-base ${
-                    selectedRecipe
-                      ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-medium"
-                      : "bg-card border-border text-gray-400"
-                  }`}
-                >
-                  {selectedRecipe
-                    ? `${selectedRecipe.name} (${selectedRecipe.recipeType})`
-                    : "Select Recipe"}
-                </button>
-              </div>
-
-              {/* Quantity — lbs only for mix recipes */}
-              {selectedRecipe && (
-                <div>
-                  <label className="text-sm font-medium text-muted mb-1 block">
-                    Pounds (lbs) *
-                  </label>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={lbs}
-                    onChange={(e) => setLbs(e.target.value)}
-                    placeholder="Enter total lbs"
-                    className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                  />
-                </div>
-              )}
-
-              {/* Date */}
-              <div>
-                <label className="text-sm font-medium text-muted mb-1 block">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={reportDate}
-                  onChange={(e) => setReportDate(e.target.value)}
-                  className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                />
-              </div>
-
-              {/* Operator */}
-              <div>
-                <label className="text-sm font-medium text-muted mb-1 block">
-                  Operator *
-                </label>
-                <input
-                  type="text"
-                  value={operatorName}
-                  onChange={(e) => setOperatorName(e.target.value)}
-                  placeholder="Enter operator name"
-                  className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                />
-              </div>
-            </div>
-          )}
+      {recipesLoading && (
+        <div className="text-center py-8">
+          <p className="text-muted">Loading recipes...</p>
         </div>
       )}
 
-      {/* STEP 2: Review */}
-      {step === "review" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
+      {recipesError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+          <p className="text-red-700 text-sm font-medium">{recipesError}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-red-600 text-sm font-semibold mt-2"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!recipesLoading && !recipesError && (
+        <div className="space-y-4">
+          {/* Recipe */}
+          <div>
+            <label className="text-sm font-medium text-muted mb-1 block">Recipe *</label>
             <button
               type="button"
-              onClick={() => {
-                setStep("form");
-                setShowShortageWarning(false);
-              }}
-              className="text-emerald-600 font-medium flex items-center gap-1"
+              onClick={() => setShowRecipePicker(true)}
+              className={`w-full text-left border rounded-xl px-4 py-3 text-base ${
+                selectedRecipe
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-medium"
+                  : "bg-card border-border text-gray-400"
+              }`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 19.5L8.25 12l7.5-7.5"
-                />
-              </svg>
-              Back
+              {selectedRecipe ? selectedRecipe.name : "Select Recipe"}
             </button>
-            <h1 className="text-xl font-bold">Review & Submit</h1>
-            <div className="w-12" />
           </div>
 
-          {/* Summary */}
-          <div className="bg-card border border-border rounded-xl mb-4 overflow-hidden">
-            <div className="px-4 py-3 border-b border-border bg-gray-50">
-              <p className="font-semibold">Production Details</p>
-            </div>
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex justify-between">
-                <p className="text-sm text-muted">Recipe</p>
-                <p className="text-sm font-medium">{selectedRecipe?.name}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-sm text-muted">Type</p>
-                <p className="text-sm font-medium capitalize">
-                  {selectedRecipe?.recipeType}
-                </p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-sm text-muted">Quantity</p>
-                <p className="text-sm font-medium">{quantityDisplay}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-sm text-muted">Date</p>
-                <p className="text-sm font-medium">{reportDate}</p>
-              </div>
-            </div>
+          {/* Pounds */}
+          <div>
+            <label className="text-sm font-medium text-muted mb-1 block">Pounds (lbs) *</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={lbs}
+              onChange={(e) => setLbs(e.target.value)}
+              placeholder="Enter total lbs"
+              className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
+            />
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="text-sm font-medium text-muted mb-1 block">Date</label>
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
+            />
+          </div>
+
+          {/* Operator */}
+          <div>
+            <label className="text-sm font-medium text-muted mb-1 block">Operator *</label>
+            <input
+              type="text"
+              value={operatorName}
+              onChange={(e) => setOperatorName(e.target.value)}
+              placeholder="Enter operator name"
+              className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
+            />
           </div>
 
           {/* Shortage Warning */}
           {showShortageWarning && shortages.length > 0 && (
-            <div className="bg-amber-50 border border-amber-300 rounded-xl mb-4 overflow-hidden">
+            <div className="bg-amber-50 border border-amber-300 rounded-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-amber-200 bg-amber-100">
-                <p className="font-semibold text-amber-800">
-                  Insufficient Stock
-                </p>
+                <p className="font-semibold text-amber-800">Insufficient Stock</p>
               </div>
               <div className="px-4 py-3 space-y-2">
                 {shortages.map((s, idx) => (
@@ -436,22 +299,12 @@ export default function NewProductionPage() {
                   </div>
                 ))}
               </div>
-              <div className="px-4 py-3 border-t border-amber-200 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowShortageWarning(false);
-                    setStep("form");
-                  }}
-                  className="flex-1 border border-amber-300 text-amber-800 rounded-xl py-3 font-semibold"
-                >
-                  Go Back
-                </button>
+              <div className="px-4 py-3 border-t border-amber-200">
                 <button
                   type="button"
                   onClick={() => handleSubmit(true)}
                   disabled={saving}
-                  className="flex-1 bg-amber-600 text-white rounded-xl py-3 font-semibold"
+                  className="w-full bg-amber-600 text-white rounded-xl py-3 font-semibold"
                 >
                   {saving ? "Saving..." : "Submit Anyway"}
                 </button>
@@ -459,34 +312,16 @@ export default function NewProductionPage() {
             </div>
           )}
 
-          {/* Operator */}
+          {/* Submit */}
           {!showShortageWarning && (
-            <>
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="text-sm font-medium text-muted mb-1 block">
-                    Operator *
-                  </label>
-                  <input
-                    type="text"
-                    value={operatorName}
-                    onChange={(e) => setOperatorName(e.target.value)}
-                    placeholder="Enter operator name"
-                    className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleSubmit(false)}
-                disabled={saving}
-                className="w-full bg-emerald-600 text-white rounded-2xl py-5 text-xl font-semibold active:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Submit Production"}
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => handleSubmit(false)}
+              disabled={saving}
+              className="w-full bg-emerald-600 text-white rounded-2xl py-5 text-xl font-semibold active:opacity-90 transition-opacity disabled:opacity-50 mt-2"
+            >
+              {saving ? "Saving..." : "Submit Production"}
+            </button>
           )}
         </div>
       )}
