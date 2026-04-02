@@ -30,6 +30,7 @@ const reportTypeLabel: Record<string, string> = {
   outgoing: "SQF Outgoing Report",
   incoming: "SQF Incoming Report",
   cip: "Clean In Place Report",
+  production: "Production Report",
 };
 
 export default function ReportDetailPage() {
@@ -53,6 +54,7 @@ export default function ReportDetailPage() {
   }
 
   const isCIP = report.reportType === "cip";
+  const isProduction = report.reportType === "production";
 
   return (
     <div className="px-4 pt-4 pb-8">
@@ -76,7 +78,32 @@ export default function ReportDetailPage() {
           <p className="font-semibold">{reportTypeLabel[report.reportType] || "SQF Report"}</p>
         </div>
         <div className="px-4 py-3 space-y-2">
-          {isCIP ? (
+          {isProduction ? (
+            <>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Recipe</p>
+                <p className="text-sm font-medium">{report.companyReceiving}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Type</p>
+                <p className="text-sm font-medium capitalize">{report.receivingMethod}</p>
+              </div>
+              {report.items && report.items.length > 0 && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Quantity</p>
+                  <p className="text-sm font-medium">{report.items[0].quantity}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Date</p>
+                <p className="text-sm font-medium">{formatDate(report.reportDate)}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Operator</p>
+                <p className="text-sm font-medium">{report.operatorName}</p>
+              </div>
+            </>
+          ) : isCIP ? (
             <>
               {report.machineName && (
                 <div className="flex justify-between">
