@@ -68,23 +68,33 @@ export default function NewProductionPage() {
   // Only mix recipes, grouped by category
   const mixRecipes = recipes.filter((r) => r.recipeType === "mix");
 
-  const MIX_CATEGORIES = [
-    { label: "Cups", match: (name: string) => /cup/i.test(name) },
-    { label: "Bottles", match: (name: string) => /bottle|prep|syrup|marg/i.test(name) },
-    { label: "Dips", match: (name: string) => /dip/i.test(name) },
-    { label: "Rounders", match: (name: string) => /rounder/i.test(name) },
+  // Categories checked in order — first match wins
+  const MIX_CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
+    { label: "Cups", match: (name) => /cup|chili rim mix|chili cup/i.test(name) },
+    { label: "Dips", match: (name) => /dip/i.test(name) },
+    { label: "Rounders", match: (name) => /rounder/i.test(name) },
+    { label: "Bottles", match: (name) => /bottle|prep|preparado|syrup|margarita/i.test(name) },
   ];
 
-  const categorizedRecipes = MIX_CATEGORIES.map((cat) => ({
+  const categorizedRecipes: { label: string; recipes: Recipe[] }[] = MIX_CATEGORIES.map((cat) => ({
     label: cat.label,
-    recipes: mixRecipes.filter((r) => cat.match(r.name)),
-  })).filter((c) => c.recipes.length > 0);
+    recipes: [],
+  }));
+  const otherRecipes: Recipe[] = [];
 
-  // Uncategorized mix recipes
-  const categorizedIds = new Set(categorizedRecipes.flatMap((c) => c.recipes.map((r) => r.id)));
-  const otherRecipes = mixRecipes.filter((r) => !categorizedIds.has(r.id));
+  for (const recipe of mixRecipes) {
+    if (recipe.name.toLowerCase() === "test") continue; // skip test recipes
+    const catIdx = MIX_CATEGORIES.findIndex((cat) => cat.match(recipe.name));
+    if (catIdx >= 0) {
+      categorizedRecipes[catIdx].recipes.push(recipe);
+    } else {
+      otherRecipes.push(recipe);
+    }
+  }
+
+  const filteredCategories = categorizedRecipes.filter((c) => c.recipes.length > 0);
   if (otherRecipes.length > 0) {
-    categorizedRecipes.push({ label: "Other", recipes: otherRecipes });
+    filteredCategories.push({ label: "Other", recipes: otherRecipes });
   }
 
   const hasQuantity = !!lbs.trim();
@@ -171,7 +181,7 @@ export default function NewProductionPage() {
               </button>
             </div>
             <div className="overflow-y-auto p-3 pb-6">
-              {categorizedRecipes.map((category) => (
+              {filteredCategories.map((category) => (
                 <div key={category.label} className="mb-3">
                   <p className="text-xs font-bold text-muted uppercase tracking-wide px-2 mb-1">
                     {category.label}
