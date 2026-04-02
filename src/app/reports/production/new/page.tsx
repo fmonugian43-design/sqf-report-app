@@ -58,7 +58,14 @@ export default function NewProductionPage() {
       });
   }, []);
 
-  const mixRecipes = recipes.filter((r) => r.recipeType === "mix");
+  // Deduplicate by name, keep first occurrence
+  const seen = new Set<string>();
+  const mixRecipes = recipes.filter((r) => {
+    if (r.recipeType !== "mix") return false;
+    if (seen.has(r.name)) return false;
+    seen.add(r.name);
+    return true;
+  });
 
   const MIX_CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
     { label: "Cups", match: (name) => /cup|chili rim mix|chili cup/i.test(name) },
