@@ -35,8 +35,6 @@ export default function NewProductionPage() {
   // Form fields
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [lbs, setLbs] = useState("");
-  const [pallets, setPallets] = useState("");
-  const [cases, setCases] = useState("");
   const [reportDate, setReportDate] = useState(todayISO());
   const [operatorName, setOperatorName] = useState("");
 
@@ -67,13 +65,29 @@ export default function NewProductionPage() {
       });
   }, []);
 
-  const isMix = selectedRecipe?.recipeType === "mix";
-  const isPack = selectedRecipe?.recipeType === "pack";
-
+  // Only mix recipes, grouped by category
   const mixRecipes = recipes.filter((r) => r.recipeType === "mix");
-  const packRecipes = recipes.filter((r) => r.recipeType === "pack");
 
-  const hasQuantity = isMix ? !!lbs.trim() : !!(pallets.trim() || cases.trim());
+  const MIX_CATEGORIES = [
+    { label: "Cups", match: (name: string) => /cup/i.test(name) },
+    { label: "Bottles", match: (name: string) => /bottle|prep|syrup|marg/i.test(name) },
+    { label: "Dips", match: (name: string) => /dip/i.test(name) },
+    { label: "Rounders", match: (name: string) => /rounder/i.test(name) },
+  ];
+
+  const categorizedRecipes = MIX_CATEGORIES.map((cat) => ({
+    label: cat.label,
+    recipes: mixRecipes.filter((r) => cat.match(r.name)),
+  })).filter((c) => c.recipes.length > 0);
+
+  // Uncategorized mix recipes
+  const categorizedIds = new Set(categorizedRecipes.flatMap((c) => c.recipes.map((r) => r.id)));
+  const otherRecipes = mixRecipes.filter((r) => !categorizedIds.has(r.id));
+  if (otherRecipes.length > 0) {
+    categorizedRecipes.push({ label: "Other", recipes: otherRecipes });
+  }
+
+  const hasQuantity = !!lbs.trim();
 
   const goToReview = () => {
     if (!selectedRecipe) {
@@ -81,7 +95,7 @@ export default function NewProductionPage() {
       return;
     }
     if (!hasQuantity) {
-      showToast(isMix ? "Enter pounds" : "Enter pallets or cases");
+      showToast("Enter pounds");
       return;
     }
     setStep("review");
@@ -104,9 +118,7 @@ export default function NewProductionPage() {
           recipeName: selectedRecipe.name,
           recipeType: selectedRecipe.recipeType,
           finishedItemId: selectedRecipe.finishedItemId,
-          lbs: isMix ? lbs.trim() : undefined,
-          pallets: isPack ? pallets.trim() || undefined : undefined,
-          cases: isPack ? cases.trim() || undefined : undefined,
+          lbs: lbs.trim(),
           reportDate,
           operatorName: operatorName.trim(),
           forceBypass,
@@ -133,11 +145,7 @@ export default function NewProductionPage() {
     }
   };
 
-  const quantityDisplay = isMix
-    ? `${lbs} lbs`
-    : [pallets && `${pallets} pallets`, cases && `${cases} cases`]
-        .filter(Boolean)
-        .join(", ");
+  const quantityDisplay = `${lbs} lbs`;
 
   return (
     <div className="px-4 pt-4 pb-8">
@@ -163,23 +171,20 @@ export default function NewProductionPage() {
               </button>
             </div>
             <div className="overflow-y-auto p-3 pb-6">
-              {mixRecipes.length > 0 && (
-                <div className="mb-3">
+              {categorizedRecipes.map((category) => (
+                <div key={category.label} className="mb-3">
                   <p className="text-xs font-bold text-muted uppercase tracking-wide px-2 mb-1">
-                    Mix Recipes
+                    {category.label}
                   </p>
                   <div className="grid grid-cols-2 gap-1">
-                    {mixRecipes.map((recipe) => (
+                    {category.recipes.map((recipe) => (
                       <button
                         key={recipe.id}
                         type="button"
                         onClick={() => {
                           setSelectedRecipe(recipe);
                           setShowRecipePicker(false);
-                          // Reset quantity fields on recipe change
                           setLbs("");
-                          setPallets("");
-                          setCases("");
                         }}
                         className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                           selectedRecipe?.id === recipe.id
@@ -192,36 +197,7 @@ export default function NewProductionPage() {
                     ))}
                   </div>
                 </div>
-              )}
-              {packRecipes.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wide px-2 mb-1">
-                    Pack Recipes
-                  </p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {packRecipes.map((recipe) => (
-                      <button
-                        key={recipe.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedRecipe(recipe);
-                          setShowRecipePicker(false);
-                          setLbs("");
-                          setPallets("");
-                          setCases("");
-                        }}
-                        className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                          selectedRecipe?.id === recipe.id
-                            ? "bg-emerald-600 text-white"
-                            : "active:bg-gray-100"
-                        }`}
-                      >
-                        <p className="font-medium">{recipe.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -325,8 +301,8 @@ export default function NewProductionPage() {
                 </button>
               </div>
 
-              {/* Quantity — adapts to recipe type */}
-              {selectedRecipe && isMix && (
+              {/* Quantity — lbs only for mix recipes */}
+              {selectedRecipe && (
                 <div>
                   <label className="text-sm font-medium text-muted mb-1 block">
                     Pounds (lbs) *
@@ -339,37 +315,6 @@ export default function NewProductionPage() {
                     placeholder="Enter total lbs"
                     className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
                   />
-                </div>
-              )}
-
-              {selectedRecipe && isPack && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-muted mb-1 block">
-                      Pallets
-                    </label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={pallets}
-                      onChange={(e) => setPallets(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted mb-1 block">
-                      Cases
-                    </label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={cases}
-                      onChange={(e) => setCases(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                    />
-                  </div>
                 </div>
               )}
 
