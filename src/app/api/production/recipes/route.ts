@@ -6,7 +6,7 @@ const INVENTORY_API_URL =
 
 export async function GET() {
   try {
-    const res = await fetch(`${INVENTORY_API_URL}/api/recipes`, {
+    const res = await fetch(`${INVENTORY_API_URL}/api/external/recipes`, {
       headers: { "Content-Type": "application/json" },
     });
 
