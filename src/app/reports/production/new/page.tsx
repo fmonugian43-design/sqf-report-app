@@ -58,14 +58,16 @@ export default function NewProductionPage() {
       });
   }, []);
 
-  // Deduplicate by name, keep first occurrence
-  const seen = new Set<string>();
-  const mixRecipes = recipes.filter((r) => {
-    if (r.recipeType !== "mix") return false;
-    if (seen.has(r.name)) return false;
-    seen.add(r.name);
-    return true;
-  });
+  // Deduplicate by name, keep highest ID (most recent / actively used)
+  const mixByName = new Map<string, Recipe>();
+  for (const r of recipes) {
+    if (r.recipeType !== "mix") continue;
+    const existing = mixByName.get(r.name);
+    if (!existing || r.id > existing.id) {
+      mixByName.set(r.name, r);
+    }
+  }
+  const mixRecipes = Array.from(mixByName.values());
 
   const MIX_CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
     { label: "Cups", match: (name) => /cup|chili rim mix|chili cup/i.test(name) },
