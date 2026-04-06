@@ -91,6 +91,23 @@ const PRODUCT_CATEGORIES = [
       "1.5oz Shaker Bottle",
     ],
   },
+  {
+    label: "Settlers Jerky",
+    products: [
+      "Settlers Jerky - Prime Rib",
+      "Settlers Jerky - Cowboy",
+      "Settlers Jerky - Sweet & Spicy",
+    ],
+  },
+  {
+    label: "Jovy",
+    products: [
+      "Jovy Chamoy Rings Picante - Watermelon",
+      "Jovy Chamoy Rings Picante - Peach",
+      "Jovy Chamoy Picante Manguito",
+      "Jovy Chamoy Picante Bears",
+    ],
+  },
 ];
 
 type Step = "header" | "products" | "review";
