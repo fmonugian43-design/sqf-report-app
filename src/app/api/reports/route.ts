@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { reports, reportItems } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
-import { appendViaWebhook } from "@/lib/google-sheets";
+import { appendViaWebhook, appendSQFQualityViaWebhook } from "@/lib/google-sheets";
 import { generateCIPPdf } from "@/lib/pdf";
 import { sendCIPReport } from "@/lib/email";
 
@@ -36,6 +36,8 @@ export async function POST(req: Request) {
     lastLotCode = "",
     cleaningProduct = "",
     processUsed = "",
+    hotFill = "",
+    expirationDate = "",
     items = [],
   } = body;
 
@@ -46,15 +48,16 @@ export async function POST(req: Request) {
     );
   }
 
-  // CIP reports don't require company or items
-  if (reportType !== "cip" && !companyReceiving) {
+  // CIP and SQF Quality reports don't require standard company/items validation
+  const skipStandardValidation = reportType === "cip" || reportType === "sqf-quality";
+  if (!skipStandardValidation && !companyReceiving) {
     return NextResponse.json(
       { error: "Company is required" },
       { status: 400 }
     );
   }
 
-  if (reportType !== "cip" && !items.length) {
+  if (!skipStandardValidation && !items.length) {
     return NextResponse.json(
       { error: "At least one product is required" },
       { status: 400 }
@@ -76,6 +79,8 @@ export async function POST(req: Request) {
       lastLotCode,
       cleaningProduct,
       processUsed,
+      hotFill,
+      expirationDate,
     })
     .returning()
     .get();
@@ -114,9 +119,26 @@ export async function POST(req: Request) {
     });
   }
 
+  // Sync SQF Quality reports to Google Sheets (non-blocking)
+  if (reportType === "sqf-quality") {
+    appendSQFQualityViaWebhook({
+      productName: companyReceiving,
+      productLotCode: lastLotCode,
+      hotFill,
+      productionDate: reportDate,
+      expirationDate,
+      operatorName,
+      ingredients: items.map((i: { productName: string; lotCode: string }) => ({
+        ingredientName: i.productName,
+        lotCode: i.lotCode || "",
+      })),
+    }).catch(() => {});
+  }
+
   // Sync to Google Sheets (non-blocking) - only for incoming/outgoing
-  if (reportType !== "cip") {
+  if (reportType !== "cip" && reportType !== "sqf-quality") {
     appendViaWebhook({
+      reportType,
       reportDate,
       companyReceiving,
       receivingMethod,
