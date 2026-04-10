@@ -31,6 +31,7 @@ const COMPANIES = [
   "Steves Grocery",
   "Prodmex",
   "Summit C&C",
+  "Kafer Distribution",
 ];
 
 const METHODS = ["Pickup", "Delivered", "Trucking"];
