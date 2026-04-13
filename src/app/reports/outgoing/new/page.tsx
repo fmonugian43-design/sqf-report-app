@@ -32,6 +32,7 @@ const COMPANIES = [
   "Prodmex",
   "Summit C&C",
   "Kafer Distribution",
+  "KeHE Distributor",
 ];
 
 const METHODS = ["Pickup", "Delivered", "Trucking"];
