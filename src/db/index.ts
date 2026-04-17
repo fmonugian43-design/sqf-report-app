@@ -59,5 +59,11 @@ if (!colNames.includes("cleaning_product")) {
 if (!colNames.includes("process_used")) {
   sqlite.exec("ALTER TABLE reports ADD COLUMN process_used TEXT DEFAULT ''");
 }
+if (!colNames.includes("hot_fill")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN hot_fill TEXT DEFAULT ''");
+}
+if (!colNames.includes("expiration_date")) {
+  sqlite.exec("ALTER TABLE reports ADD COLUMN expiration_date TEXT DEFAULT ''");
+}
 
 export const db = drizzle(sqlite, { schema });

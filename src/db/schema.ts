@@ -16,6 +16,9 @@ export const reports = sqliteTable("reports", {
   lastLotCode: text("last_lot_code").default(""),
   cleaningProduct: text("cleaning_product").default(""),
   processUsed: text("process_used").default(""),
+  // SQF Quality fields
+  hotFill: text("hot_fill").default(""),
+  expirationDate: text("expiration_date").default(""),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`
   ),
