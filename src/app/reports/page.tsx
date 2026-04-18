@@ -48,9 +48,13 @@ export default function ReportHistoryPage() {
                 <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
                   r.reportType === "cip" ? "bg-amber-50 text-amber-700" :
                   r.reportType === "production" ? "bg-emerald-50 text-emerald-700" :
+                  r.reportType === "sqf-quality" ? "bg-violet-50 text-violet-700" :
                   "bg-blue-50 text-primary"
                 }`}>
-                  {r.reportType === "cip" ? "CIP" : r.reportType === "production" ? "Production" : r.reportType}
+                  {r.reportType === "cip" ? "CIP" :
+                   r.reportType === "production" ? "Production" :
+                   r.reportType === "sqf-quality" ? "SQF Quality" :
+                   r.reportType}
                 </span>
                 <p className="text-sm text-muted mt-1">{r.itemCount} items</p>
               </div>

@@ -18,6 +18,8 @@ interface ReportDetail {
   lastLotCode: string;
   cleaningProduct: string;
   processUsed: string;
+  hotFill: string;
+  expirationDate: string;
   items: Array<{
     productName: string;
     lotCode: string;
@@ -31,6 +33,7 @@ const reportTypeLabel: Record<string, string> = {
   incoming: "SQF Incoming Report",
   cip: "Clean In Place Report",
   production: "Production Report",
+  "sqf-quality": "SQF Quality Report",
 };
 
 export default function ReportDetailPage() {
@@ -55,6 +58,7 @@ export default function ReportDetailPage() {
 
   const isCIP = report.reportType === "cip";
   const isProduction = report.reportType === "production";
+  const isSQFQuality = report.reportType === "sqf-quality";
 
   return (
     <div className="px-4 pt-4 pb-8">
@@ -78,7 +82,38 @@ export default function ReportDetailPage() {
           <p className="font-semibold">{reportTypeLabel[report.reportType] || "SQF Report"}</p>
         </div>
         <div className="px-4 py-3 space-y-2">
-          {isProduction ? (
+          {isSQFQuality ? (
+            <>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Product</p>
+                <p className="text-sm font-medium">{report.companyReceiving}</p>
+              </div>
+              {report.lastLotCode && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Lot Code</p>
+                  <p className="text-sm font-medium">{report.lastLotCode}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Hot Fill</p>
+                <p className="text-sm font-medium">{report.hotFill || "No"}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Date</p>
+                <p className="text-sm font-medium">{formatDate(report.reportDate)}</p>
+              </div>
+              {report.expirationDate && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted">Expiration Date</p>
+                  <p className="text-sm font-medium">{formatDate(report.expirationDate)}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p className="text-sm text-muted">Operator</p>
+                <p className="text-sm font-medium">{report.operatorName}</p>
+              </div>
+            </>
+          ) : isProduction ? (
             <>
               <div className="flex justify-between">
                 <p className="text-sm text-muted">Recipe</p>
@@ -178,7 +213,9 @@ export default function ReportDetailPage() {
       {!isCIP && report.items && report.items.length > 0 && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-gray-50">
-            <p className="font-semibold">Products ({report.items.length})</p>
+            <p className="font-semibold">
+              {isSQFQuality ? "Ingredient Lot Codes" : "Products"} ({report.items.length})
+            </p>
           </div>
           {report.items.map((item, idx) => (
             <div key={idx} className="px-4 py-3 border-b border-border last:border-b-0">
