@@ -49,11 +49,14 @@ const PRODUCT_CATEGORIES = [
     ],
   },
   {
-    label: "25oz Bottles",
+    label: "Bottles",
     products: [
       "25oz Prep Bottle",
+      "16oz Preparada Bottle",
+      "16oz Mango Bottle",
       "25oz Mango Prep Bottle",
       "25oz Simple Syrup",
+      "25oz Grenadine Syrup",
       "25oz Lemon Lime Marg",
       "25oz Jalapeno Marg",
     ],
