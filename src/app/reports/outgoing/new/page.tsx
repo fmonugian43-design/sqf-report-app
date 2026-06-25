@@ -281,8 +281,8 @@ function NewOutgoingReportForm() {
 
       {/* Company Picker Modal */}
       {showCompanyPicker && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white w-full max-w-lg rounded-t-2xl max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl max-h-[75vh] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="text-lg font-bold">Select Company</h2>
               <button
