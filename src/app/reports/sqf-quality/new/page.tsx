@@ -27,6 +27,11 @@ interface Ingredient {
   parentRecipe: string | null;
 }
 
+interface IngredientLot {
+  itemName: string;
+  lotCode: string;
+}
+
 const CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
   { label: "Cups", match: (name) => /cup|margarita rim/i.test(name) },
   { label: "Dips", match: (name) => /dip/i.test(name) },
@@ -61,6 +66,7 @@ export default function SQFQualityPage() {
   const [operatorName, setOperatorName] = useState("");
   // Step 3 - Ingredient lot codes
   const [ingredientLotCodes, setIngredientLotCodes] = useState<string[]>([]);
+  const [changingLotIndexes, setChangingLotIndexes] = useState<Set<number>>(new Set());
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -103,11 +109,27 @@ export default function SQFQualityPage() {
         }
       }
       setIngredients(allIngredients);
-      setIngredientLotCodes(new Array(allIngredients.length).fill(""));
+      setChangingLotIndexes(new Set());
+
+      const lotsRes = await fetch("/api/sqf-quality/ingredient-lots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredientNames: allIngredients.map((ingredient) => ingredient.itemName),
+        }),
+      });
+      const savedLots: IngredientLot[] = lotsRes.ok ? await lotsRes.json() : [];
+      const lotByIngredient = new Map(
+        savedLots.map((lot) => [lot.itemName.trim(), lot.lotCode])
+      );
+      setIngredientLotCodes(
+        allIngredients.map((ingredient) => lotByIngredient.get(ingredient.itemName.trim()) || "")
+      );
     } catch {
       showToast("Could not load ingredients");
       setIngredients([]);
       setIngredientLotCodes([]);
+      setChangingLotIndexes(new Set());
     } finally {
       setIngredientsLoading(false);
     }
@@ -483,7 +505,7 @@ export default function SQFQualityPage() {
         <div>
           <h2 className="text-lg font-bold mb-1">Ingredient Lot Codes</h2>
           <p className="text-sm text-muted mb-4">
-            {ingredientLotCodes.filter((c) => c.trim()).length} of {ingredients.length} entered
+            {ingredientLotCodes.filter((c) => c.trim()).length} of {ingredients.length} ready — using the most recently recorded lot codes.
           </p>
 
           <div className="space-y-3">
@@ -500,21 +522,41 @@ export default function SQFQualityPage() {
                       From: {ing.parentRecipe}
                     </p>
                   )}
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-1 block">
-                      {ing.itemName}
-                    </label>
-                    <input
-                      type="text"
-                      value={ingredientLotCodes[idx] || ""}
-                      onChange={(e) => {
-                        const updated = [...ingredientLotCodes];
-                        updated[idx] = e.target.value;
-                        setIngredientLotCodes(updated);
-                      }}
-                      placeholder="Lot code"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-base bg-card"
-                    />
+                  <div className="rounded-xl border border-border bg-card p-3">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <label className="text-sm font-medium text-foreground">
+                        {ing.itemName}
+                      </label>
+                      {!changingLotIndexes.has(idx) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChangingLotIndexes((current) => new Set(current).add(idx));
+                          }}
+                          className="shrink-0 text-sm font-semibold text-violet-600"
+                        >
+                          New lot code
+                        </button>
+                      )}
+                    </div>
+                    {changingLotIndexes.has(idx) ? (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={ingredientLotCodes[idx] || ""}
+                        onChange={(e) => {
+                          const updated = [...ingredientLotCodes];
+                          updated[idx] = e.target.value;
+                          setIngredientLotCodes(updated);
+                        }}
+                        placeholder="Enter new lot code"
+                        className="w-full border border-violet-300 rounded-lg px-3 py-2.5 text-base bg-white"
+                      />
+                    ) : (
+                      <p className={ingredientLotCodes[idx] ? "text-base font-medium text-foreground" : "text-sm text-amber-700"}>
+                        {ingredientLotCodes[idx] || "No previous lot code — enter one"}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
