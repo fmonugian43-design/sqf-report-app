@@ -30,6 +30,8 @@ sqlite.exec(`
     last_lot_code TEXT DEFAULT '',
     cleaning_product TEXT DEFAULT '',
     process_used TEXT DEFAULT '',
+    hot_fill TEXT DEFAULT '',
+    expiration_date TEXT DEFAULT '',
     created_at INTEGER DEFAULT (unixepoch())
   );
 
