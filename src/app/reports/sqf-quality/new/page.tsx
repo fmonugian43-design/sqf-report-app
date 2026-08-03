@@ -41,6 +41,16 @@ const CATEGORIES: { label: string; match: (name: string) => boolean }[] = [
   { label: "Shakers", match: (name) => /shaker/i.test(name) },
 ];
 
+const MIX_RECIPE_ALIASES: {
+  finishedItemName: string;
+  recipeName: RegExp;
+}[] = [
+  {
+    finishedItemName: "Prep Bottles 25oz",
+    recipeName: /^Preparado (?:Isabella|Morning Star) Mix$/i,
+  },
+];
+
 export default function SQFQualityPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("product");
@@ -150,6 +160,23 @@ export default function SQFQualityPage() {
         mixRecipeIds: r.recipeType === "mix" ? [r.id] : [],
       });
     }
+  }
+
+  // Some package sizes reuse a mix recipe whose inventory finished item is a
+  // different package. Attach those formula recipes explicitly so Food Reports
+  // still shows the raw-ingredient statement without including pack materials.
+  for (const alias of MIX_RECIPE_ALIASES) {
+    const product = Array.from(productMap.values()).find(
+      (item) => item.finishedItemName === alias.finishedItemName
+    );
+    if (!product || product.mixRecipeIds.length > 0) continue;
+
+    product.mixRecipeIds = recipes
+      .filter(
+        (recipe) =>
+          recipe.recipeType === "mix" && alias.recipeName.test(recipe.name)
+      )
+      .map((recipe) => recipe.id);
   }
   const finishedProducts = Array.from(productMap.values());
 
