@@ -39,6 +39,10 @@ const METHODS = ["Pickup", "Delivered", "Trucking"];
 
 const PRODUCT_CATEGORIES = [
   {
+    label: "Bulk (quantity in pounds)",
+    products: ["Chile Bulk (per lb)"],
+  },
+  {
     label: "Cups",
     products: [
       "Regular Cup",
