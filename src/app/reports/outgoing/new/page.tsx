@@ -58,6 +58,7 @@ const PRODUCT_CATEGORIES = [
       "25oz Prep Bottle",
       "16oz Preparada Bottle",
       "16oz Preparado Watermelon Bottle",
+      "16oz Preparado Tamarindo Bottle",
       "16oz Mango Bottle",
       "16oz Simple Syrup Vanilla",
       "25oz Mango Prep Bottle",
