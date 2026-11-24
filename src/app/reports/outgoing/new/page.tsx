@@ -112,6 +112,13 @@ const PRODUCT_CATEGORIES = [
     ],
   },
   {
+    label: "Micheladas Antojitos Candy",
+    products: [
+      "Micheladas Antojitos Peach Rings",
+      "Micheladas Antojitos Watermelon Rings",
+    ],
+  },
+  {
     label: "Jovy",
     products: [
       "Jovy Chamoy Rings Picante - Watermelon",
